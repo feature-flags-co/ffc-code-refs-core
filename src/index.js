@@ -9,16 +9,13 @@ const path = require('path');
 const needle = require('needle');
 const process = require('process');
 
-// secretKey = "NDEyLWY1YzEtNCUyMDIxMDkwNDA5NDIwOV9fMl9fM19fMTAyX19kZWZhdWx0XzQ5ZTQ0";
-
-// 读取请求参数
-const secretKey = process.env.npm_config_secret_key;
+// "NDEyLWY1YzEtNCUyMDIxMDkwNDA5NDIwOV9fMl9fM19fMTAyX19kZWZhdWx0XzQ5ZTQ0";
 
 // 匹配开关的正则表达式
 const regex = /(.*?)(checkVariation|checkVariationAsync)\((\s*)([\"|\'])(.*?)[\"|\'](.*?)/g;
 
 // 请求开关地址
-const baseURL = "https://ffc-api-ce2-dev.chinacloudsites.cn/public/api/feature-flag/archived";
+const defaultURL = "https://ffc-api-ce2-dev.chinacloudsites.cn/public/api/feature-flag/archived";
 
 // 匹配到的开关名字
 let featureFlags = [];
@@ -27,29 +24,51 @@ let featureFlags = [];
 let allFeatureFlags = [];
 
 (async () => {
-    allFeatureFlags = [...await requestAAllFeatureFlags()];
 
-    // 获取当前正在执行项目的路径
-    let executingPath = process.cwd();
+    // 读取请求参数
+    const secretKey = process.env.npm_config_secret_key;
 
-    // 要遍历的文件夹
-    let ergodicPath = path.resolve(executingPath);
+    if(secretKey) {
 
-    //调用文件遍历方法  
-    ergodicFiles(ergodicPath);
+        let baseURL = process.env.npm_config_server_url;
 
-    let timer = setInterval(() => {
-        featureFlags.length && (() => {
-            clearInterval(timer);
+        if(!baseURL) {
+            let messageStr = `未配置服务器地址...\n将使用默认的服务器地址...\n默认服务器地址为：${defaultURL}`;
+            console.log('\x1B[33m%s\x1B[39m', messageStr);
 
-            // 去重
-            let featureFlagsArr = [...new Set(featureFlags)];
-            // 查找不存在的开关名字
-            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, allFeatureFlags);
-            
-            console.log(allDeletedFeatureFlags)
-        })();
-    }, 500)
+            baseURL = defaultURL;
+        }
+
+        allFeatureFlags = [...await requestAAllFeatureFlags(secretKey, baseURL)];
+
+        // 获取当前正在执行项目的路径
+        let executingPath = process.cwd();
+    
+        // 要遍历的文件夹
+        let ergodicPath = path.resolve(executingPath);
+    
+        //调用文件遍历方法  
+        ergodicFiles(ergodicPath);
+    
+        let timer = setInterval(() => {
+            featureFlags.length && (() => {
+                clearInterval(timer);
+    
+                // 去重
+                let featureFlagsArr = [...new Set(featureFlags)];
+                // 查找不存在的开关名字
+                let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, allFeatureFlags);
+                
+                console.log("\n文件扫描完毕，被移除的开关列表\n");
+
+                allDeletedFeatureFlags.forEach((featureFlag, index) => {
+                    console.log('\x1B[32m%s\x1B[39m', `\t${index + 1}：${featureFlag}`);
+                })
+            })();
+        }, 500)
+    } else {
+        console.log('\x1B[31m%s\x1B[39m', "请配置 secret_key...");
+    }
 })();
 
 /** 
@@ -90,7 +109,10 @@ function ergodicFiles(ergodicPath) {
     }); 
 }
 
-// 读取文件内容
+/**
+ * 读取文件内容
+ * @param {*} filedir 文件地址
+ */
 function readFileContent(filedir) {
     fs.readFile(filedir, "utf-8", (error, data) => {
         !error && (() => {
@@ -136,9 +158,9 @@ function findDeleteFeatureFlags(useFeatureFlags, allFeatureFlags) {
  * 请求正在使用的所有开关
  * @returns 
  */
-function requestAAllFeatureFlags() {
+function requestAAllFeatureFlags(secretKey, url) {
     return new Promise((resolve) => {
-        needle.get(`${baseURL}?envSecret=${secretKey}`, (error, response) => {
+        needle.get(`${url}?envSecret=${secretKey}`, (error, response) => {
             if (!error && response.statusCode == 200) {
                 resolve(response.body);
             } else {

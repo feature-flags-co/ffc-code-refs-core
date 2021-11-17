@@ -18,3 +18,9 @@ Command line program for generating flag code references.
 }
 ```
 
+
+
+## 二、参数
+
+- --secret_key：配置请求开关列表的 secretKey，必须配置
+- --server_url：服务器的请求地址，不配置使用默认地址
