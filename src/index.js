@@ -15,7 +15,9 @@ const process = require('process');
 const regex = /(.*?)(checkVariation|checkVariationAsync)\((\s*)([\"|\'])(.*?)[\"|\'](.*?)/g;
 
 // 请求开关地址
-const defaultURL = "https://ffc-api-ce2-dev.chinacloudsites.cn/public/api/feature-flag/archived";
+const defaultURL = "https://ffc-api-ce2-dev.chinacloudsites.cn";
+
+const defaultRequestURL = "public/api/feature-flag/archived";
 
 // 匹配到的开关名字
 let featureFlags = [];
@@ -32,11 +34,16 @@ let allFeatureFlags = [];
 
         let baseURL = process.env.npm_config_server_url;
 
-        if(!baseURL) {
+        if(baseURL) {
+
+            // 判断输入的 url 是否以 "/" 结尾，以 "/" 结尾则
+            baseURL = baseURL.endsWith("/") ? baseURL + defaultRequestURL : baseURL + "/" + defaultRequestURL;
+
+        } else {
             let messageStr = `未配置服务器地址...\n将使用默认的服务器地址...\n默认服务器地址为：${defaultURL}`;
             console.log('\x1B[33m%s\x1B[39m', messageStr);
 
-            baseURL = defaultURL;
+            baseURL = defaultURL + "/" + defaultRequestURL;
         }
 
         allFeatureFlags = [...await requestAAllFeatureFlags(secretKey, baseURL)];
@@ -47,9 +54,10 @@ let allFeatureFlags = [];
         // 要遍历的文件夹
         let ergodicPath = path.resolve(executingPath);
     
-        //调用文件遍历方法  
+        // 调用文件遍历方法  
         ergodicFiles(ergodicPath);
     
+        // 等待文件扫描完成
         let timer = setInterval(() => {
             featureFlags.length && (() => {
                 clearInterval(timer);
