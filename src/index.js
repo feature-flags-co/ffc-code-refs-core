@@ -32,7 +32,7 @@ let excluded = [...excludedDirectories, ...excludedFileNames];
 (async () => {
 
     // 读取请求参数
-    const secretKey = 'YTE3LTJjMTktNCUyMDIxMTAxMTIwMDQ1NF9fNV9fMjhfXzU2X19kZWZhdWx0X2Q2OWUz' //process.env.npm_config_secret_key;
+    const secretKey = process.env.npm_config_secret_key;
 
     if(secretKey) {
 
