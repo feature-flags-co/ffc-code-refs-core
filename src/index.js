@@ -58,26 +58,24 @@ let excluded = [...excludedDirectories, ...excludedFileNames];
         // 要遍历的文件夹
         let ergodicPath = path.resolve(executingPath);
     
-        // 调用文件遍历方法
-        ergodicFiles(ergodicPath);
+        // 调用文件遍历方法  
+        ergodicFilesAsync(ergodicPath, ['js', 'ts']);
     
-        // 等待文件扫描完成
-        let timer = setInterval(() => {
-            featureFlags.length && (() => {
-                clearInterval(timer);
-    
-                // 去重
-                let featureFlagsArr = [...new Set(featureFlags)];
-                // 查找不存在的开关名字
-                let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, activeFeatureFlags);
-                
-                console.log("\n扫描完毕，被移除的开关列表\n");
+        // 文件扫描完成
+        featureFlags.length && (() => {
+            // 去重
+            let featureFlagsArr = [...new Set(featureFlags)];
+            // 查找不存在的开关名字
+            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, activeFeatureFlags);
+            
+            console.log("\n文件扫描完毕，被移除的开关列表\n");
 
-                allDeletedFeatureFlags.forEach((featureFlag, index) => {
-                    console.log('\x1B[32m%s\x1B[39m', `\t${index + 1}：${featureFlag}`);
-                })
-            })();
-        }, 500)
+            allDeletedFeatureFlags.forEach((featureFlag, index) => {
+                console.log('\x1B[32m%s\x1B[39m', `\t${index + 1}：${featureFlag}`);
+            })
+        })();
+
+        !featureFlags.length && console.log('\x1B[32m%s\x1B[39m', `读取的文件中没有使用开关!`);
     } else {
         console.log('\x1B[31m%s\x1B[39m', "请配置 secret_key...");
     }
@@ -121,6 +119,66 @@ function ergodicFiles(ergodicPath) {
     }); 
 }   
 /**
+ * 遍历文件夹，同步非递归
+ * @param {*} ergodicPath 需要遍历的文件路径
+ * @param {*} format 需要遍历的文件后缀
+ */
+function ergodicFilesAsync(ergodicPath, format) {
+    // 保存文件路径
+    let paths = new Array();
+
+    paths.push(ergodicPath);
+    while(paths && paths.length !== 0) {
+
+        let path = paths.pop();
+
+        let children = [];
+
+        try {
+            // 读取路径下的子元素
+            children = fs.readdirSync(path);
+        } catch(e) {
+            
+            // 读取权限不足的文件
+            continue;
+        }
+
+        // 遍历子元素
+        children.forEach(child => {
+
+            // 构造文件完整路径
+            let fullPath = `${path}/${child}`;
+            let fileInfo;
+
+            try {
+                // 读取文件信息
+                fileInfo = fs.statSync(fullPath);
+            } catch(e) {
+                return true;
+            }
+
+            /**
+             * 判断当前文件是否是文件夹
+             *      是：保存文件路径到 paths，下一次循环遍历
+             *      否：读取文件内容
+             */
+            if(fileInfo.isDirectory()) {
+                paths.push(fullPath);
+            } else {
+                // 分割文件名
+                let fileNameSplit = child.split(".");
+                // 截取文件后缀
+                let suffix = fileNameSplit[fileNameSplit.length - 1];
+
+                if(format.includes(suffix)) {
+                    readFileContentAsync(fullPath);
+                }
+            }
+        })
+    }
+}
+
+/**
  * 读取文件内容
  * @param {*} filedir 文件地址
  */
@@ -132,6 +190,23 @@ function readFileContent(filedir) {
             matchResult && (featureFlags = [...featureFlags, ...sortoutMatchResult(matchResult)]);
         })();
     })
+}
+
+/**
+ * 读取文件内容 同步
+ * @param {*} filedir 文件地址
+ */
+function readFileContentAsync(filedir) {
+    let data;
+
+    try{
+        data = fs.readFileSync(filedir, "utf-8");
+    } catch(e) {
+        data = "";
+    }
+
+    let matchResult = data.match(regex);
+    matchResult && (featureFlags = [...featureFlags, ...sortoutMatchResult(matchResult)]);
 }
 
 /**
