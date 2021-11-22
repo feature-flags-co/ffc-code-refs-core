@@ -19,9 +19,6 @@ const defaultURL = "https://ffc-api-ce2-dev.chinacloudsites.cn";
 
 const defaultRequestURL = "api/public/feature-flag";
 
-// 匹配到的开关名字
-let featureFlags = [];
-
 // 当前正在使用的开关列表
 let activeFeatureFlags = [];
 
@@ -59,14 +56,14 @@ let excluded = [...excludedDirectories, ...excludedFileNames];
         let ergodicPath = path.resolve(executingPath);
     
         // 调用文件遍历方法  
-        ergodicFilesAsync(ergodicPath, ['js', 'ts']);
+        const featureFlags = ergodicFiles(ergodicPath, ['js', 'ts']);
     
         // 文件扫描完成
         featureFlags.length && (() => {
             // 去重
             let featureFlagsArr = [...new Set(featureFlags)];
             // 查找不存在的开关名字
-            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, activeFeatureFlags);
+            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, activeFeatureFlags.map(f => f.keyName));
             
             console.log("\n文件扫描完毕，被移除的开关列表\n");
 
@@ -85,7 +82,7 @@ let excluded = [...excludedDirectories, ...excludedFileNames];
  * 遍历文件夹
  * @param ergodicPath 需要遍历的文件路径 
  */  
-function ergodicFiles(ergodicPath) {
+function ergodicFilesAsync(ergodicPath) {
 
     //根据文件路径读取文件，返回文件列表  
     fs.readdir(ergodicPath, (err,files) => {
@@ -123,9 +120,10 @@ function ergodicFiles(ergodicPath) {
  * @param {*} ergodicPath 需要遍历的文件路径
  * @param {*} format 需要遍历的文件后缀
  */
-function ergodicFilesAsync(ergodicPath, format) {
+function ergodicFiles(ergodicPath, format) {
     // 保存文件路径
     let paths = new Array();
+    let featureFlags = [];
 
     paths.push(ergodicPath);
     while(paths && paths.length !== 0) {
@@ -171,18 +169,20 @@ function ergodicFilesAsync(ergodicPath, format) {
                 let suffix = fileNameSplit[fileNameSplit.length - 1];
 
                 if(format.includes(suffix)) {
-                    readFileContentAsync(fullPath);
+                    featureFlags = [...featureFlags, ...readFileContent(fullPath)];
                 }
             }
         })
     }
+
+    return featureFlags;
 }
 
 /**
  * 读取文件内容
  * @param {*} filedir 文件地址
  */
-function readFileContent(filedir) {
+function readFileContentAsync(filedir) {
     fs.readFile(filedir, "utf-8", (error, data) => {
         !error && (() => {
             let matchResult = data.match(regex);
@@ -196,7 +196,7 @@ function readFileContent(filedir) {
  * 读取文件内容 同步
  * @param {*} filedir 文件地址
  */
-function readFileContentAsync(filedir) {
+function readFileContent(filedir) {
     let data;
 
     try{
@@ -206,7 +206,7 @@ function readFileContentAsync(filedir) {
     }
 
     let matchResult = data.match(regex);
-    matchResult && (featureFlags = [...featureFlags, ...sortoutMatchResult(matchResult)]);
+    return matchResult ? sortoutMatchResult(matchResult) : [];
 }
 
 /**
@@ -235,9 +235,7 @@ function sortoutMatchResult(result) {
  * @param {*} allFeatureFlags   请求下来的正在使用的所有开关
  */
 function findDeleteFeatureFlags(useFeatureFlags, allFeatureFlags) {
-    let result = [];
-    useFeatureFlags.map(featureFalg => !allFeatureFlags.includes(featureFalg) && (result[result.length] = featureFalg));
-    return result;
+    return useFeatureFlags.filter(f => !allFeatureFlags.includes(f));
 }
 
 /**
