@@ -12,18 +12,22 @@ const process = require('process');
 // "NDEyLWY1YzEtNCUyMDIxMDkwNDA5NDIwOV9fMl9fM19fMTAyX19kZWZhdWx0XzQ5ZTQ0";
 
 // 匹配开关的正则表达式
-const regex = /(.*?)(checkVariation|checkVariationAsync)\((\s*)([\"|\'])(.*?)[\"|\'](.*?)/g;
+const regex = /(.*?)(checkVariation|checkVariationAsync|variation|variationAsync)\((\s*)([\"|\'])(.*?)[\"|\'](.*?)/g;
 
 // 请求开关地址
 const defaultURL = "https://ffc-api-ce2-dev.chinacloudsites.cn";
 
-const defaultRequestURL = "public/api/feature-flag/archived";
+const defaultRequestURL = "api/public/feature-flag";
 
 // 匹配到的开关名字
 let featureFlags = [];
 
 // 当前正在使用的开关列表
-let allFeatureFlags = [];
+let activeFeatureFlags = [];
+
+let excludedDirectories = ['node_modules', '.git'];
+let excludedFileNames = ['package.json', 'package-lock.json', 'readme.md', '.gitignore', 'LICENSE'];
+let excluded = [...excludedDirectories, ...excludedFileNames];
 
 (async () => {
 
@@ -46,7 +50,7 @@ let allFeatureFlags = [];
             baseURL = defaultURL + "/" + defaultRequestURL;
         }
 
-        allFeatureFlags = [...await requestAAllFeatureFlags(secretKey, baseURL)];
+        activeFeatureFlags = [...await requestActiveFeatureFlags(secretKey, baseURL)];
 
         // 获取当前正在执行项目的路径
         let executingPath = process.cwd();
@@ -62,7 +66,7 @@ let allFeatureFlags = [];
             // 去重
             let featureFlagsArr = [...new Set(featureFlags)];
             // 查找不存在的开关名字
-            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, allFeatureFlags);
+            let allDeletedFeatureFlags = findDeleteFeatureFlags(featureFlagsArr, activeFeatureFlags);
             
             console.log("\n文件扫描完毕，被移除的开关列表\n");
 
@@ -91,7 +95,7 @@ function ergodicFiles(ergodicPath) {
             files.forEach(filename => {
 
                 // 排除 node_modules 文件夹
-                (filename !== "node_modules") && (() => {
+                (excluded.findIndex(f => f === filename) === -1) && (() => {
 
                     //获取当前文件的绝对路径  
                     let filedir = path.join(ergodicPath,filename);
@@ -104,7 +108,7 @@ function ergodicFiles(ergodicPath) {
                             let isDir = stats.isDirectory();
                             
                             isFile && readFileContent(filedir);
-                        
+
                             // 递归遍历文件夹
                             isDir && ergodicFiles(filedir);
                         })(); 
@@ -113,8 +117,7 @@ function ergodicFiles(ergodicPath) {
             });  
         })(); 
     }); 
-}
-
+}   
 /**
  * 遍历文件夹，同步非递归
  * @param {*} ergodicPath 需要遍历的文件路径
@@ -241,7 +244,7 @@ function findDeleteFeatureFlags(useFeatureFlags, allFeatureFlags) {
  * 请求正在使用的所有开关
  * @returns 
  */
-function requestAAllFeatureFlags(secretKey, url) {
+function requestActiveFeatureFlags(secretKey, url) {
     return new Promise((resolve) => {
         needle.get(`${url}?envSecret=${secretKey}`, (error, response) => {
             if (!error && response.statusCode == 200) {
