@@ -1,4 +1,4 @@
-# ffc-code-refs
+# ffc-code-refs-core
 Command line program for generating flag code references. 
 
 
