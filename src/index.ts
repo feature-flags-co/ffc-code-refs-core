@@ -255,7 +255,6 @@ async function start (): Promise<void|string> {
             })
         } 
     } catch (err) {
-        console.log(process.cwd());
         console.log('error while loading the config file', err);
     }
 
