@@ -1,8 +1,8 @@
 {
-    "envSecret": "MzZlLTY1MTAtNCUyMDIxMTEwMTE0NTIwNF9fNV9fNl9fMTJfX2RlZmF1bHRfYzVlNzU=",
+    "envSecret": "",
     "apiUrl": "https://ffc-api-ce2-dev.chinacloudsites.cn",
-    "excluded": [],
-    "fileExtensions": ["ts", "js"],
+    "excluded": ["node_modules"],
+    "fileExtensions": [],
     "numberOfContextLines": 3,
     "silence": true,
     "exitWithErrorWhenStaleFeatureFlagFound": false

@@ -3,7 +3,7 @@
   "bin": {
     "scan": "index.ts"
   },
-  "version": "1.0.1",
+  "version": "1.0.9",
   "description": "Scan folders and find stale feature flags",
   "main": "index.ts",
   "scripts": {

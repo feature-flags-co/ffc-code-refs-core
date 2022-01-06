@@ -4,8 +4,6 @@ import needle from 'needle';
 import lineByLine from 'n-readlines';
 import config from './ffcconfig.json';
 
-const projectRootPath = '../../../';
-
 interface IConfig {
     envSecret: string,
     apiUrl: string,
@@ -59,8 +57,12 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     let featureFlagsStats: IFeatureFlagStats[] = [];
 
     paths.push(path);
+    console.log("Scanning");
     while(paths && paths.length !== 0) {
-
+        if (defaultConfig.silence) {
+            process.stdout.write(".");
+        }
+        
         let path = paths.pop();
 
         let children: string[] = [];
@@ -179,7 +181,7 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
  * @param {*} activeFeatureFlags   all active feature flag retrived from ffc
  */
  function findStaleFeatureFlags(featureFlagsInCode, activeFeatureFlags) {
-    return featureFlagsInCode.filter(f => !activeFeatureFlags.includes(f));
+    return featureFlagsInCode.filter(f => !activeFeatureFlags.includes(f.featureFlag));
 }
 
 async function start (): Promise<void|string> {
@@ -202,10 +204,10 @@ async function start (): Promise<void|string> {
 
     const activeFeatureFlags = [...await requestActiveFeatureFlags(secretKey, baseURL)];
     
-    //let rootPath = './tests'//path.resolve(process.cwd());
+    let rootPath = process.cwd(); //path.resolve(process.cwd());
 
-    const featureFlagsInCode = scan(projectRootPath);
-
+    const featureFlagsInCode = scan(rootPath);
+    console.log('');
     if (featureFlagsInCode.length > 0) {
         // remove duplicats
         let featureFlagsArr = Array.from(new Set(featureFlagsInCode).values());
@@ -227,12 +229,17 @@ async function start (): Promise<void|string> {
 
 (async () => {
     try {
-        const configPath = projectRootPath + 'ffcconfig.json';
+        const configPath = process.cwd() + '/ffcconfig.json';
         const config = await import(configPath);
 
         if (config) {
             defaultConfig = Object.assign({}, defaultConfig, config, {
-                excluded: [...defaultConfig.excluded, ...config.excluded]
+                excluded: [...defaultConfig.excluded, ...config.excluded],
+                fileExtensions: [...defaultConfig.fileExtensions, ...config.excluded],
+                apiUrl: config.apiUrl || defaultConfig.apiUrl,
+                numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
+                silence: config.silence == null || config.silence === undefined ? defaultConfig.silence  : config.silence,
+                exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
             })
         } 
     } catch (err) {
