@@ -1,26 +1,80 @@
 # ffc-code-refs-core
-Command line program for generating flag code references. 
+This is a ommand line util for generating flag code references when using the feature-flags.co SaaS or Standalone project. 
 
 
+## Install
 
-## 一、安装
+Use npm to install the package into your project
+  ```
+  npm install ffc-code-refs-core --save-dev
+  ```
 
-1. 克隆或者下载当前文件
-2. 安装依赖 npm install
-3. 在项目中安装：npm install file:文件路径（文件路径包含 src 目录）
-4. 在项目 package.json 文件中配置运行命令，运行该程序的命令为 scan
+In your package.json file,  add the following command:
 
 ```json
 {
+  ...
   "scripts": {
-    "scan": "scan"
+    ...
+    "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js"
+    ...
   }
+  ...
 }
 ```
 
+Add to the root directory of your project, a file ffcconfig.json with following content:
+```json
+{
+    "envSecret": "",
+    "apiUrl": "",
+    "excluded": [],
+    "fileExtensions": [],
+    "numberOfContextLines": 0,
+    "silence": true,
+    "exitWithErrorWhenStaleFeatureFlagFound": false
+}
+```
+- **envSecret**: the secret of your environment, can be find in your account
+- **apiUrl**: can be empty if you are using our SaaS platform
+- **excluded**: list of excluded file or directory, put the file or directory name only, path is not expected
+- **fileExtensions**: the file extensions that you want to be scanned, if empty, all files will be scanned
+- **numberOfContextLines**: the number of lines before and after that will be included into the report, the default value is 0
+- **silence**: Will print the process if false, the default value is true
+- **exitWithErrorWhenStaleFeatureFlagFound**: If true, will exit with error when any stale feature flag is found, the default value is true
 
+If you want to specify a config file with different name or different position, you can add a parameter when running the command
+```json
+{
+  ...
+  "scripts": {
+    ...
+    "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js --config path/to/your/config/file"
+    ...
+  }
+  ...
+}
+```
 
-## 二、参数
+## Run
 
-- --secret_key：配置请求开关列表的 secretKey，必须配置
-- --server_url：服务器的请求地址，不配置使用默认地址
+```json
+npm run ffc-scan
+```
+
+## Note
+Currently, in your project, when getting the feature flag value, the method and parameters must be on the same line in order to be recognized by the util, for example
+
+```json
+FFCJsClient.variation('featureFlagKey', 'defaultResult');
+```
+
+will work, but 
+
+```json
+FFCJsClient.variation(
+  'featureFlagKey', 
+  'defaultResult'
+);
+```
+won't work

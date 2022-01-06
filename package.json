@@ -3,12 +3,12 @@
   "bin": {
     "scan": "index.ts"
   },
-  "version": "1.0.9",
+  "version": "1.0.12",
   "description": "Scan folders and find stale feature flags",
   "main": "index.ts",
   "scripts": {
     "build": "rimraf ./dist && tsc",
-    "scan": "npm run build && node dist/index.js"
+    "scan": "npm run build && node dist/index.js --cfg ./dist/ffcconfig.json"
   },
   "author": "liwei",
   "license": "ISC",

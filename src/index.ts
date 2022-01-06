@@ -1,7 +1,10 @@
 import fs from 'fs';
+import path from 'path';
 import { exit } from 'process';
 import needle from 'needle';
 import lineByLine from 'n-readlines';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
 import config from './ffcconfig.json';
 
 interface IConfig {
@@ -106,7 +109,7 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
                 // 截取文件后缀
                 let suffix = fileNameSplit[fileNameSplit.length - 1];
 
-                if(defaultConfig.fileExtensions.includes(suffix)) {
+                if(defaultConfig.fileExtensions.length === 0 || defaultConfig.fileExtensions.includes(suffix)) {
                     featureFlagsStats = [...featureFlagsStats, ...readFileContent(fullPath)];
                 }
             }
@@ -229,13 +232,22 @@ async function start (): Promise<void|string> {
 
 (async () => {
     try {
-        const configPath = process.cwd() + '/ffcconfig.json';
+        const argv = yargs(hideBin(process.argv))
+            .option('config', {
+                alias: 'cfg',
+                type: 'string',
+                description: 'the path of the config file'
+            })
+            .help()
+            .alias('help', 'h').argv;
+
+        const configPath = path.resolve(argv['config'] === null || argv['config'] === undefined || argv['config'] === '' ? process.cwd() + '/ffcconfig.json' : argv['config']);
         const config = await import(configPath);
 
         if (config) {
             defaultConfig = Object.assign({}, defaultConfig, config, {
                 excluded: [...defaultConfig.excluded, ...config.excluded],
-                fileExtensions: [...defaultConfig.fileExtensions, ...config.excluded],
+                fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
                 apiUrl: config.apiUrl || defaultConfig.apiUrl,
                 numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
                 silence: config.silence == null || config.silence === undefined ? defaultConfig.silence  : config.silence,
