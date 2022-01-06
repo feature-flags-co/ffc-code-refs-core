@@ -13,13 +13,9 @@ In your package.json file,  add the following command:
 
 ```json
 {
-  ...
   "scripts": {
-    ...
     "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js"
-    ...
   }
-  ...
 }
 ```
 
@@ -46,32 +42,28 @@ Add to the root directory of your project, a file ffcconfig.json with following 
 If you want to specify a config file with different name or different position, you can add a parameter when running the command
 ```json
 {
-  ...
   "scripts": {
-    ...
     "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js --config path/to/your/config/file"
-    ...
   }
-  ...
 }
 ```
 
 ## Run
 
-```json
+```
 npm run ffc-scan
 ```
 
 ## Note
 Currently, in your project, when getting the feature flag value, the method and parameters must be on the same line in order to be recognized by the util, for example
 
-```json
+```
 FFCJsClient.variation('featureFlagKey', 'defaultResult');
 ```
 
 will work, but 
 
-```json
+```
 FFCJsClient.variation(
   'featureFlagKey', 
   'defaultResult'
