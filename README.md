@@ -1,5 +1,5 @@
 # ffc-code-refs-core
-This is a ommand line util for generating flag code references when using the feature-flags.co SaaS or Standalone project. 
+This is a command line util for generating flag code references when using the feature-flags.co SaaS or Standalone project. 
 
 
 ## Install
@@ -39,7 +39,7 @@ Add to the root directory of your project, a file ffcconfig.json with following 
 - **silence**: will print the process if false, the default value is, **not mandatory**
 - **exitWithErrorWhenStaleFeatureFlagFound**: if true, will exit with error when any stale feature flag is found, the default value is true, **not mandatory**
 
-If you want to specify a config file with different name or different position, you can add a parameter when running the command
+If you want to specify a config file with different name or in a different position, you can add a parameter when running the command
 ```json
 {
   "scripts": {
