@@ -54,6 +54,28 @@ If you want to specify a config file with different name or in a different posit
 npm run ffc-scan
 ```
 
+## Deal with false positive cases
+
+Sometimes the same method name of the SDK may be used in the project, this would result to false positive cases, to avoid this, we can add ffcscan comment to ingore one line or disable a block of code, for example 
+
+```
+// ffcscan ignore
+const myvar = abc.variation("abc");
+```
+
+the above comment would ignore the line directly below the comment.
+
+```
+// ffcscan disable
+const myvar = abc.variation("abc");
+if (myvar) {
+  continue;
+}
+// ffcscan enable
+```
+
+The above comments will ignore all the code between them.
+
 ## Note
 Currently, in your project, when getting the feature flag value, the method and parameters must be on the same line in order to be recognized by the util, for example
 

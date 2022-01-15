@@ -7,6 +7,7 @@ import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import config from './ffcconfig.json';
 
+
 interface IConfig {
     envSecret: string,
     apiUrl: string,
@@ -119,6 +120,18 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     return featureFlagsStats;
 }
 
+function hasIgnoreLineComment(lineStr: string): boolean {
+    return !!lineStr && lineStr.replace(/\s/g, '').match(/ffcscanignore/ig) !== null;
+}
+
+function hasDisableComment(lineStr: string): boolean {
+    return !!lineStr && lineStr.replace(/\s/g, '').match(/ffcscandisable/ig) !== null;
+}
+
+function hasEnableComment(lineStr: string): boolean {
+    return !!lineStr && lineStr.replace(/\s/g, '').match(/ffcscanenable/ig) !== null;
+}
+
 /**
  * 读取文件内容 同步
  * @param {*} filedir 文件地址
@@ -133,6 +146,8 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     const preContextLines: string[] = [];
     defaultConfig.numberOfContextLines
 
+    let isDisableComment = false;
+    let isIgnoreLineComment = false; // only the line directly below the comment would be ignored
     while (line = liner.next()) {
         const lineStr = line.toString('utf8').replace(/\r?\n|\r/g, "").trim();
 
@@ -157,17 +172,39 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
             }
         }
 
-        if (matchRegex) {
-            let splitResult = lineStr.replace(/\s/g, "").replace(/\'/g, "\"").split("\"");
-            linesStats.push({
-                filePath,
-                lineNumber,
-                featureFlag: splitResult.length > 0 ? splitResult[1] : '',
-                line: lineStr,
-                preContextLines: [...preContextLines],
-                postContextLines: []
-            });
+        if (isDisableComment) {
+            if (!hasEnableComment(lineStr)) {
+                lineNumber++;
+                continue;
+            }                                                                                                                                                                                                                                                                                       
+
+            isDisableComment = false;
         }
+
+        isDisableComment = hasDisableComment(lineStr);
+        if (isDisableComment) {
+            lineNumber++;
+            continue;
+        }
+
+        if (isIgnoreLineComment) {
+            isIgnoreLineComment = hasIgnoreLineComment(lineStr);
+        } else {
+            isIgnoreLineComment = hasIgnoreLineComment(lineStr);
+
+            if (matchRegex) {
+                let splitResult = lineStr.replace(/\s/g, "").replace(/\'/g, "\"").split("\"");
+                linesStats.push({
+                    filePath,
+                    lineNumber,
+                    featureFlag: splitResult.length > 0 ? splitResult[1] : '',
+                    line: lineStr,
+                    preContextLines: [...preContextLines],
+                    postContextLines: []
+                });
+            }
+        }
+
         lineNumber++;
     }
 
@@ -208,7 +245,6 @@ async function start (): Promise<void|string> {
     const activeFeatureFlags = [...await requestActiveFeatureFlags(secretKey, baseURL)];
     
     let rootPath = process.cwd(); //path.resolve(process.cwd());
-
     const featureFlagsInCode = scan(rootPath);
     console.log('');
     if (featureFlagsInCode.length > 0) {
@@ -227,6 +263,8 @@ async function start (): Promise<void|string> {
         } else {
             console.log("Done, no stale feature flags found in the current project");
         }
+    } else {
+        console.log("Done, no stale feature flags found in the current project");
     }
 }
 
