@@ -6,7 +6,28 @@ import lineByLine from 'n-readlines';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import config from './ffcconfig.json';
+import winston, { format } from 'winston';
 
+const { combine, timestamp, printf, colorize, align } = format;
+
+const myFormat = printf( (info) => {
+    return `${info.level} ${info.timestamp}: ${info.message}`;
+  });
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: combine(
+    format.errors({ stack: true }),
+    colorize(),
+	timestamp(),
+    align(),
+    myFormat
+  ),
+  transports: [
+    new winston.transports.Console(),
+    //new winston.transports.File({ filename: 'ffc-code-refs.log' }),
+  ],
+});
 
 interface IConfig {
     envSecret: string,
@@ -45,7 +66,7 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
             if (!error && response.statusCode == 200 && !!response.body && !!response.body.data) {
                 resolve(response.body.data);
             } else {
-                resolve([]);
+                logger.log({level: 'error', message: error?.message || 'error while requesting active feature flags'});
             }
         })
     })
@@ -61,13 +82,13 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     let featureFlagsStats: IFeatureFlagStats[] = [];
 
     paths.push(path);
-    console.log("Scanning");
+    logger.log({level: 'info', message: 'Scanning'});
     while(paths && paths.length !== 0) {
-        if (defaultConfig.silence) {
-            process.stdout.write(".");
-        }
-        
         let path = paths.pop();
+
+        if (!defaultConfig.silence) {
+            logger.log({level: 'info', message: path});
+        }
 
         let children: string[] = [];
 
@@ -208,9 +229,9 @@ function hasEnableComment(lineStr: string): boolean {
         lineNumber++;
     }
 
-    if (!defaultConfig.silence && linesStats.length > 0) {
-        console.log(`Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`);
-    }
+    // if (!defaultConfig.silence && linesStats.length > 0) {
+    //     logger.log({level: '', message: `Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`});
+    // }
 
     return linesStats;
 }
@@ -228,7 +249,7 @@ async function start (): Promise<void|string> {
     const secretKey = defaultConfig.envSecret; // TODO replace with integration token
 
     if(!secretKey) {
-        console.log('Please set environment secret');
+        logger.log({ level: 'error', message: 'Please set environment secret'});
         exit(-1);
     }
 
@@ -238,7 +259,7 @@ async function start (): Promise<void|string> {
     if(baseURL) {
         baseURL = baseURL.endsWith("/") ? baseURL + ffListEndPoint : baseURL + "/" + ffListEndPoint;
     } else {
-       console.log('Please set apiUrl');
+       logger.log({ level: 'error', message: 'Please set apiUrl'});
        exit(-1);
     }
 
@@ -246,7 +267,6 @@ async function start (): Promise<void|string> {
     
     let rootPath = process.cwd(); //path.resolve(process.cwd());
     const featureFlagsInCode = scan(rootPath);
-    console.log('');
     if (featureFlagsInCode.length > 0) {
         // remove duplicats
         let featureFlagsArr = Array.from(new Set(featureFlagsInCode).values());
@@ -254,17 +274,17 @@ async function start (): Promise<void|string> {
         let staleFeatureFlags = findStaleFeatureFlags(featureFlagsArr, activeFeatureFlags.map(f => f.keyName));
         
         if (staleFeatureFlags.length > 0) {
-            console.log("Done, found following stale feature flags:");
-            console.log(JSON.stringify(staleFeatureFlags, null, 4));
+            logger.log({ level: 'info', message: 'Done, found following stale feature flags:'});
+            logger.log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
 
             if (defaultConfig.exitWithErrorWhenStaleFeatureFlagFound) {
                 exit(-1);
             }
         } else {
-            console.log("Done, no stale feature flags found in the current project");
+            logger.log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
         }
     } else {
-        console.log("Done, no stale feature flags found in the current project");
+        logger.log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
     }
 }
 
@@ -292,8 +312,8 @@ async function start (): Promise<void|string> {
                 exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
             })
         } 
-    } catch (err) {
-        console.log('error while loading the config file', err);
+    } catch (err: any) {
+        logger.log({ level: 'error', message: err.message});
     }
 
     start();
