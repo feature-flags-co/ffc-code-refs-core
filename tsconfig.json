@@ -1,7 +1,7 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": "build",
     "rootDir": "src",
     "noImplicitAny": false,
     "module": "commonjs",
@@ -20,7 +20,7 @@
       "**/*"
   ],
   "exclude": [
-      "dist/**/*",
+      "build/**/*",
       "tests/**/*"
   ]
 }

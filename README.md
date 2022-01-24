@@ -14,7 +14,7 @@ In your package.json file,  add the following command:
 ```json
 {
   "scripts": {
-    "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js"
+    "ffc-code-refs": "npx code-refs"
   }
 }
 ```
@@ -43,7 +43,7 @@ If you want to specify a config file with different name or in a different posit
 ```json
 {
   "scripts": {
-    "ffc-scan": "node ./node_modules/ffc-code-refs-core/dist/index.js --config path/to/your/config/file"
+    "ffc-code-refs": "npx code-refs --config path/to/your/config/file"
   }
 }
 ```
@@ -51,7 +51,13 @@ If you want to specify a config file with different name or in a different posit
 ## Run
 
 ```
-npm run ffc-scan
+npm run ffc-code-refs
+```
+
+or directly without adding **scripts** in your package.json file 
+
+```
+npx code-refs
 ```
 
 ## Deal with false positive cases
