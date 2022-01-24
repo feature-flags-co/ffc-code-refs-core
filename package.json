@@ -1,16 +1,23 @@
 {
   "name": "ffc-code-refs-core",
   "bin": {
-    "scan": "index.ts"
+    "code-refs": "./build/cli.js"
   },
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Scan folders and find stale feature flags",
-  "main": "index.ts",
+  "main": "./build/cli.js",
   "scripts": {
-    "build": "rimraf ./dist && tsc",
-    "scan": "npm run build && node dist/index.js --cfg ./dist/ffcconfig.json"
+    "build": "rimraf ./build && tsc",
+    "code-refs-cli": "npm run build && npx ffcscan --cfg ./build/ffcconfig.json",
+    "code-refs": "npm run build && node build/cli.js --cfg ./build/ffcconfig.json"
   },
-  "author": "liwei",
+  "keywords": [
+    "feature-flags.co",
+    "敏捷开关",
+    "feature flags",
+    "Code reference"
+  ],
+  "author": "北京天博助力科技有限公司",
   "license": "ISC",
   "dependencies": {
     "n-readlines": "^1.0.1",

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from 'fs';
 import path from 'path';
 import { exit } from 'process';
@@ -245,7 +247,38 @@ function hasEnableComment(lineStr: string): boolean {
     return featureFlagsInCode.filter(f => !activeFeatureFlags.includes(f.featureFlag));
 }
 
-async function start (): Promise<void|string> {
+async function buildConfig() {
+    try {
+        const argv = yargs(hideBin(process.argv))
+            .option('config', {
+                alias: 'cfg',
+                type: 'string',
+                description: 'the path of the config file'
+            })
+            .help()
+            .alias('help', 'h').argv;
+
+        const configPath = path.resolve(argv['config'] === null || argv['config'] === undefined || argv['config'] === '' ? process.cwd() + '/ffcconfig.json' : argv['config']);
+        const config = await import(configPath);
+
+        if (config) {
+            defaultConfig = Object.assign({}, defaultConfig, config, {
+                excluded: [...defaultConfig.excluded, ...config.excluded],
+                fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
+                apiUrl: config.apiUrl || defaultConfig.apiUrl,
+                numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
+                silence: config.silence == null || config.silence === undefined ? defaultConfig.silence  : config.silence,
+                exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
+            })
+        } 
+    } catch (err: any) {
+        logger.log({ level: 'error', message: err.message});
+    }
+}
+
+export default async function start (): Promise<void|string> {
+    await buildConfig();
+
     const secretKey = defaultConfig.envSecret; // TODO replace with integration token
 
     if(!secretKey) {
@@ -287,34 +320,3 @@ async function start (): Promise<void|string> {
         logger.log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
     }
 }
-
-(async () => {
-    try {
-        const argv = yargs(hideBin(process.argv))
-            .option('config', {
-                alias: 'cfg',
-                type: 'string',
-                description: 'the path of the config file'
-            })
-            .help()
-            .alias('help', 'h').argv;
-
-        const configPath = path.resolve(argv['config'] === null || argv['config'] === undefined || argv['config'] === '' ? process.cwd() + '/ffcconfig.json' : argv['config']);
-        const config = await import(configPath);
-
-        if (config) {
-            defaultConfig = Object.assign({}, defaultConfig, config, {
-                excluded: [...defaultConfig.excluded, ...config.excluded],
-                fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
-                apiUrl: config.apiUrl || defaultConfig.apiUrl,
-                numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
-                silence: config.silence == null || config.silence === undefined ? defaultConfig.silence  : config.silence,
-                exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
-            })
-        } 
-    } catch (err: any) {
-        logger.log({ level: 'error', message: err.message});
-    }
-
-    start();
-})();
