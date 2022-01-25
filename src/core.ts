@@ -101,8 +101,6 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     log({level: 'info', message: 'Scanning'});
     while(paths && paths.length !== 0) {
         let path = paths.pop();
-
-        log({level: 'info', message: path});
         
         let children: string[] = [];
 
@@ -243,6 +241,7 @@ function hasEnableComment(lineStr: string): boolean {
         lineNumber++;
     }
 
+    log({level: 'info', message: filePath});
     //  log({level: '', message: `Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`});
 
     return linesStats;

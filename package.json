@@ -3,7 +3,7 @@
   "bin": {
     "code-refs": "./build/cli.js"
   },
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Scan folders and find stale feature flags",
   "main": "./build/cli.js",
   "scripts": {
