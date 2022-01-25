@@ -37,6 +37,7 @@ interface IConfig {
     excluded: string[],
     fileExtensions: string[],
     numberOfContextLines: number,
+    exitWithErrorWhenStaleFeatureFlagFound: boolean,
     logErrorOnly: boolean
 }
 
@@ -277,6 +278,7 @@ async function buildConfig() {
                 fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
                 apiUrl: config.apiUrl || defaultConfig.apiUrl,
                 numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
+                exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
                 logErrorOnly: config.logErrorOnly == null || config.logErrorOnly === undefined ? defaultConfig.logErrorOnly  : config.logErrorOnly,
             })
         } 
@@ -318,6 +320,11 @@ export default async function start (): Promise<any> {
         if (staleFeatureFlags.length > 0) {
             log({ level: 'info', message: 'Done, found following stale feature flags:'});
             log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
+            
+            if (defaultConfig.exitWithErrorWhenStaleFeatureFlagFound) {
+                exit(-1);
+            }
+
             return staleFeatureFlags;
         } else {
             log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});

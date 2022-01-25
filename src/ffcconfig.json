@@ -1,9 +1,9 @@
 {
     "envSecret": "",
-    "apiUrl": "https://ffc-api-ce2-dev.chinacloudsites.cn",
+    "apiUrl": "https://api.feature-flags.co",
     "excluded": ["node_modules"],
     "fileExtensions": [],
     "numberOfContextLines": 3,
-    "silence": true,
-    "exitWithErrorWhenStaleFeatureFlagFound": false
+    "exitWithErrorWhenStaleFeatureFlagFound": false,
+    "logErrorOnly": false
 }
