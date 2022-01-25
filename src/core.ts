@@ -245,7 +245,6 @@ function hasEnableComment(lineStr: string): boolean {
 
     //  log({level: '', message: `Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`});
 
-
     return linesStats;
 }
 
@@ -320,7 +319,7 @@ export default async function start (): Promise<any> {
         if (staleFeatureFlags.length > 0) {
             log({ level: 'info', message: 'Done, found following stale feature flags:'});
             log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
-            
+
             if (defaultConfig.exitWithErrorWhenStaleFeatureFlagFound) {
                 exit(-1);
             }

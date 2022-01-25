@@ -27,6 +27,7 @@ Add to the root directory of your project, a file ffcconfig.json with following 
     "excluded": [],
     "fileExtensions": [],
     "numberOfContextLines": 0,
+    "exitWithErrorWhenStaleFeatureFlagFound": false,
     "logErrorOnly": true
 }
 ```

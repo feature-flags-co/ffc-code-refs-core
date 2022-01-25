@@ -17,7 +17,7 @@
     "feature flags",
     "Code reference"
   ],
-  "author": "北京天博助力科技有限公司",
+  "author": "北京心跳率科技有限公司",
   "license": "ISC",
   "dependencies": {
     "n-readlines": "^1.0.1",
