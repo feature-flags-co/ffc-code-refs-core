@@ -37,8 +37,7 @@ interface IConfig {
     excluded: string[],
     fileExtensions: string[],
     numberOfContextLines: number,
-    silence: boolean,
-    exitWithErrorWhenStaleFeatureFlagFound: boolean
+    logErrorOnly: boolean
 }
 
 interface IFeatureFlagStats {
@@ -54,6 +53,20 @@ const regex = /(.*?)(checkVariation|checkVariationAsync|variation|variationAsync
 
 let defaultConfig: IConfig = config;
 
+
+/**
+ * call this method to do logs, it calls winston internally
+ * @param {*} param it should have the following type: {level: string, message: string}
+ * @returns 
+ */
+function log(param: any) {
+    if (defaultConfig.logErrorOnly && param.level !== 'error') {
+        return;
+    }
+
+    logger.log(param);
+}
+
 /**
  * Return currently active feature flags
  * @returns 
@@ -68,7 +81,7 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
             if (!error && response.statusCode == 200 && !!response.body && !!response.body.data) {
                 resolve(response.body.data);
             } else {
-                logger.log({level: 'error', message: error?.message || 'error while requesting active feature flags'});
+                log({level: 'error', message: error?.message || 'error while requesting active feature flags'});
             }
         })
     })
@@ -84,14 +97,12 @@ function requestActiveFeatureFlags(secretKey: string, url: string): Promise<any>
     let featureFlagsStats: IFeatureFlagStats[] = [];
 
     paths.push(path);
-    logger.log({level: 'info', message: 'Scanning'});
+    log({level: 'info', message: 'Scanning'});
     while(paths && paths.length !== 0) {
         let path = paths.pop();
 
-        if (!defaultConfig.silence) {
-            logger.log({level: 'info', message: path});
-        }
-
+        log({level: 'info', message: path});
+        
         let children: string[] = [];
 
         try {
@@ -231,9 +242,8 @@ function hasEnableComment(lineStr: string): boolean {
         lineNumber++;
     }
 
-    // if (!defaultConfig.silence && linesStats.length > 0) {
-    //     logger.log({level: '', message: `Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`});
-    // }
+    //  log({level: '', message: `Scanned file: ${filePath} with following stale feature flags: [${linesStats.map(l => l.featureFlag).join(';')}]`});
+
 
     return linesStats;
 }
@@ -267,22 +277,21 @@ async function buildConfig() {
                 fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
                 apiUrl: config.apiUrl || defaultConfig.apiUrl,
                 numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
-                silence: config.silence == null || config.silence === undefined ? defaultConfig.silence  : config.silence,
-                exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
+                logErrorOnly: config.logErrorOnly == null || config.logErrorOnly === undefined ? defaultConfig.logErrorOnly  : config.logErrorOnly,
             })
         } 
     } catch (err: any) {
-        logger.log({ level: 'error', message: err.message});
+        log({ level: 'error', message: err.message});
     }
 }
 
-export default async function start (): Promise<void|string> {
+export default async function start (): Promise<any> {
     await buildConfig();
 
     const secretKey = defaultConfig.envSecret; // TODO replace with integration token
 
     if(!secretKey) {
-        logger.log({ level: 'error', message: 'Please set environment secret'});
+        log({ level: 'error', message: 'Please set environment secret'});
         exit(-1);
     }
 
@@ -292,7 +301,7 @@ export default async function start (): Promise<void|string> {
     if(baseURL) {
         baseURL = baseURL.endsWith("/") ? baseURL + ffListEndPoint : baseURL + "/" + ffListEndPoint;
     } else {
-       logger.log({ level: 'error', message: 'Please set apiUrl'});
+       log({ level: 'error', message: 'Please set apiUrl'});
        exit(-1);
     }
 
@@ -307,16 +316,15 @@ export default async function start (): Promise<void|string> {
         let staleFeatureFlags = findStaleFeatureFlags(featureFlagsArr, activeFeatureFlags.map(f => f.keyName));
         
         if (staleFeatureFlags.length > 0) {
-            logger.log({ level: 'info', message: 'Done, found following stale feature flags:'});
-            logger.log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
-
-            if (defaultConfig.exitWithErrorWhenStaleFeatureFlagFound) {
-                exit(-1);
-            }
+            log({ level: 'info', message: 'Done, found following stale feature flags:'});
+            log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
+            return staleFeatureFlags;
         } else {
-            logger.log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
+            log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
         }
     } else {
-        logger.log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
+        log({ level: 'info', message: 'Done, no stale feature flags found in the current project'});
     }
+
+    return [];
 }

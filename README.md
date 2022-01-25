@@ -27,8 +27,7 @@ Add to the root directory of your project, a file ffcconfig.json with following 
     "excluded": [],
     "fileExtensions": [],
     "numberOfContextLines": 0,
-    "silence": true,
-    "exitWithErrorWhenStaleFeatureFlagFound": false
+    "logErrorOnly": true
 }
 ```
 - **envSecret**: the secret of your environment, can be found in your SaaS account, **mandatory**
@@ -36,8 +35,7 @@ Add to the root directory of your project, a file ffcconfig.json with following 
 - **excluded**: list of excluded file or directory, put the file or directory name only, path is not expected, **not mandatory**
 - **fileExtensions**: the file extensions that you want to be scanned, if empty, all files will be scanned, **not mandatory**
 - **numberOfContextLines**: the number of lines before and after that will be included into the report, the default value is 0, **not mandatory**
-- **silence**: will print the process if false, the default value is, **not mandatory**
-- **exitWithErrorWhenStaleFeatureFlagFound**: if true, will exit with error when any stale feature flag is found, the default value is true, **not mandatory**
+- **logErrorOnly**: will print error logs only if true, the default value is false
 
 If you want to specify a config file with different name or in a different position, you can add a parameter when running the command
 ```json
