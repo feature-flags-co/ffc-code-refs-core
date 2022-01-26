@@ -1,6 +1,7 @@
 {
     "envSecret": "",
     "apiUrl": "https://api.feature-flags.co",
+    "entry": [],
     "excluded": ["node_modules"],
     "fileExtensions": [],
     "numberOfContextLines": 3,

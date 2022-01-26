@@ -3,12 +3,12 @@
   "bin": {
     "code-refs": "./build/cli.js"
   },
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Scan folders and find stale feature flags",
   "main": "./build/cli.js",
   "scripts": {
     "build": "rimraf ./build && tsc",
-    "code-refs-cli": "npm run build && npx ffcscan --cfg ./build/ffcconfig.json",
+    "code-refs-cli": "npm run build && npx code-refs --cfg ./build/ffcconfig.json",
     "code-refs": "npm run build && node build/cli.js --cfg ./build/ffcconfig.json"
   },
   "keywords": [

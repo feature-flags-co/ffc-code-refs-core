@@ -14,7 +14,7 @@ In your package.json file,  add the following command:
 ```json
 {
   "scripts": {
-    "ffc-code-refs": "npx code-refs"
+    "ffc-code-refs": "code-refs"
   }
 }
 ```
@@ -33,6 +33,7 @@ Add to the root directory of your project, a file ffcconfig.json with following 
 ```
 - **envSecret**: the secret of your environment, can be found in your SaaS account, **mandatory**
 - **apiUrl**: the server url, can be empty if you are using our SaaS platform,  **not mandatory**
+- **entry**: then entry point, can be a list of relative or absolute paths, current path would be used if not provided **not mandatory**
 - **excluded**: list of excluded file or directory, put the file or directory name only, path is not expected, **not mandatory**
 - **fileExtensions**: the file extensions that you want to be scanned, if empty, all files will be scanned, **not mandatory**
 - **numberOfContextLines**: the number of lines before and after that will be included into the report, the default value is 0, **not mandatory**
@@ -43,7 +44,7 @@ If you want to specify a config file with different name or in a different posit
 ```json
 {
   "scripts": {
-    "ffc-code-refs": "npx code-refs --config path/to/your/config/file"
+    "ffc-code-refs": "code-refs --config path/to/your/config/file"
   }
 }
 ```

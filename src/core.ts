@@ -34,6 +34,7 @@ const logger = winston.createLogger({
 interface IConfig {
     envSecret: string,
     apiUrl: string,
+    entry: string[],
     excluded: string[],
     fileExtensions: string[],
     numberOfContextLines: number,
@@ -275,6 +276,7 @@ async function buildConfig() {
                 excluded: [...defaultConfig.excluded, ...config.excluded],
                 fileExtensions: [...defaultConfig.fileExtensions, ...config.fileExtensions],
                 apiUrl: config.apiUrl || defaultConfig.apiUrl,
+                entry: config.entry == null || config.entry === undefined ? [process.cwd()]  : [...config.entry],
                 numberOfContextLines: config.numberOfContextLines || defaultConfig.numberOfContextLines,
                 exitWithErrorWhenStaleFeatureFlagFound: config.exitWithErrorWhenStaleFeatureFlagFound || defaultConfig.exitWithErrorWhenStaleFeatureFlagFound,
                 logErrorOnly: config.logErrorOnly == null || config.logErrorOnly === undefined ? defaultConfig.logErrorOnly  : config.logErrorOnly,
@@ -306,9 +308,8 @@ export default async function start (): Promise<any> {
     }
 
     const activeFeatureFlags = [...await requestActiveFeatureFlags(secretKey, baseURL)];
-    
-    let rootPath = process.cwd(); //path.resolve(process.cwd());
-    const featureFlagsInCode = scan(rootPath);
+    const featureFlagsInCode = defaultConfig.entry.flatMap(entryPath => scan(path.resolve(entryPath)));
+
     if (featureFlagsInCode.length > 0) {
         // remove duplicats
         let featureFlagsArr = Array.from(new Set(featureFlagsInCode).values());
@@ -316,8 +317,8 @@ export default async function start (): Promise<any> {
         let staleFeatureFlags = findStaleFeatureFlags(featureFlagsArr, activeFeatureFlags.map(f => f.keyName));
         
         if (staleFeatureFlags.length > 0) {
-            log({ level: 'info', message: 'Done, found following stale feature flags:'});
-            log({ level: 'info', message: JSON.stringify(staleFeatureFlags, null, 4)});
+            log({ level: 'error', message: 'Done, found following stale feature flags:'});
+            log({ level: 'error', message: JSON.stringify(staleFeatureFlags, null, 4)});
 
             if (defaultConfig.exitWithErrorWhenStaleFeatureFlagFound) {
                 exit(-1);
